@@ -1,0 +1,55 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: DB_PASSWORD
+      MYSQL_DATABASE: data_integrity
+      MYSQL_ROOT_HOST: '%' 
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./db/init/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ipfs:
+    image: ipfs/go-ipfs:v0.22.0
+    container_name: ipfs
+    ports:
+      - "5001:5001"        # HTTP API
+      - "8080:8080"        # HTTP Gateway
+      - "4001:4001/tcp"    # Swarm TCP
+      - "4001:4001/udp"    # Swarm UDP
+    volumes:
+      - ipfs_staging:/export
+      - ipfs_data:/data/ipfs
+
+  backend:
+    image: node:20-alpine
+    container_name: backend
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: ["npm", "start"]
+    env_file:
+      - .env
+    environment:
+      - RPC_URL=${RPC_URL}
+      - PRIVATE_KEY=${PRIVATE_KEY}
+      - IPFS_URL=http://ipfs:5001/api/v0
+    ports:
+      - "3000:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      ipfs:
+        condition: service_started
+
+volumes:
+  mysql_data:
+  ipfs_staging:
+  ipfs_data:

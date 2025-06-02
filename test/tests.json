@@ -1,0 +1,90 @@
+{
+  "01": {
+    "name": "Baseline MySQL",
+    "env": { "STORAGE_TYPE": "centralized" },
+    "files": ["test/sample_files/sample_100KB.bin", "test/sample_files/sample_5MB.bin"],
+    "repeats":50,
+    "runner": "store"
+  },
+
+  "02": {
+    "name": "Baseline IPFS",
+    "env": { "STORAGE_TYPE": "ipfs" },
+    "files": ["test/sample_files/sample_100KB.bin", "test/sample_files/sample_5MB.bin"],
+    "repeats": 50,
+    "runner": "store"
+  },
+
+  "03": {
+    "name": "Small-file sweep",
+    "env": { "STORAGE_TYPE": "centralized" },
+    "files": ["test/sample_files/sample_10KB.bin", "test/sample_files/sample_50KB.bin"],
+    "repeats": 50,
+    "runner": "store"
+  },
+
+  "04": {
+    "name": "Large-file sweep",
+    "env": { "STORAGE_TYPE": "ipfs" },
+    "files": ["test/sample_files/sample_10MB.bin", "test/sample_files/sample_20MB.bin"],
+    "repeats": 50,
+    "runner": "store"
+  },
+
+  "05": {
+    "name": "Tamper detection",
+    "env": { "STORAGE_TYPE": "centralized" },
+    "runner": "tamper",
+    "repeats": 50,
+    "file": "test/sample_files/sample_100KB.bin"
+  },
+
+
+  "06": {
+    "name": "Block-time split",
+    "env": { "STORAGE_TYPE": "centralized" },
+    "files": ["test/sample_files/sample_100KB.bin"],
+    "repeats": 50,
+    "runner": "store"
+  },
+
+  "07": {
+    "name": "Gas vs CID",
+    "env": { "STORAGE_TYPE": "ipfs" },
+    "file": "test/sample_files/sample_100KB.bin",
+    "runner": "cid"
+  },
+
+  "08": {
+    "name": "Cold vs warm IPFS",
+    "env": { "STORAGE_TYPE": "ipfs" },
+    "file": "test/sample_files/sample_100KB.bin",
+    "restarts": 50,
+    "runner": "coldWarm"
+  },
+
+  "09": {
+    "name": "SHA-256 overhead",
+    "file": "test/sample_files/sample_5MB.bin",
+    "repeats": 50,
+    "runner": "hashBench"
+  },
+
+
+    "10": {
+    "name": "Large-file sweep",
+    "env": { "STORAGE_TYPE": "centralized" },
+    "files": ["test/sample_files/sample_10MB.bin", "test/sample_files/sample_20MB.bin"],
+    "repeats": 50,
+    "runner": "store"
+  },
+
+   "11": {
+    "name": "small-file sweep",
+    "env": { "STORAGE_TYPE": "ipfs" },
+    "files": ["test/sample_files/sample_10KB.bin", "test/sample_files/sample_50KB.bin"],
+    "repeats": 50,
+    "runner": "store"
+  }
+
+}

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Blockchain Storage</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #1d1e25;
+      color: #f2f2f2;
+      margin: 0; padding: 0;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 500px;
+      margin: 40px auto;
+      background: #26273b;
+      border-radius: 18px;
+      box-shadow: 0 6px 32px #0004;
+      padding: 36px 28px 30px 28px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 16px;
+      font-size: 2.2em;
+      font-weight: 700;
+      letter-spacing: -1px;
+      color: #88cff8;
+    }
+    .tab-buttons {
+      display: flex;
+      margin-bottom: 20px;
+      gap: 8px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px 0;
+      background: #242a36;
+      border: none;
+      color: #88cff8;
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    .tab-btn.active {
+      background: #27314a;
+      color: #fff;
+      font-weight: 700;
+    }
+    .tab-content {
+      display: none;
+      padding-top: 4px;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-size: 1em;
+      color: #88cff8;
+    }
+    input[type="file"], input[type="text"], select {
+      margin-top: 3px;
+      width: 100%;
+      padding: 8px;
+      background: #242a36;
+      color: #fff;
+      border: 1px solid #343856;
+      border-radius: 6px;
+      font-size: 1em;
+    }
+    button {
+      margin-top: 18px;
+      width: 100%;
+      padding: 11px 0;
+      background: #48b7f8;
+      color: #fff;
+      font-size: 1.12em;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    button:active, button:focus {
+      background: #1e94e7;
+    }
+    .result-message {
+      margin-top: 18px;
+      padding: 12px;
+      border-radius: 7px;
+      font-size: 1.08em;
+      text-align: center;
+      background: #253f26;
+      color: #b5f7d2;
+      word-break: break-all;
+      min-height: 2em;
+      white-space: pre-line;
+    }
+    .result-message.error {
+      background: #4d2020;
+      color: #fcb3b3;
+    }
+    @media (max-width: 600px) {
+      .container {
+        max-width: 95vw;
+        padding: 16px 5vw 18px 5vw;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Blockchain Storage</h1>
+    <div class="tab-buttons">
+      <button class="tab-btn active" data-tab="store">Store File</button>
+      <button class="tab-btn" data-tab="verify">Verify File</button>
+    </div>
+
+    <!-- Store File Tab -->
+    <div id="store" class="tab-content active">
+      <form id="storeForm" enctype="multipart/form-data" autocomplete="off">
+        <label for="fileId">File ID (choose a unique name):</label>
+        <input type="text" name="fileId" id="fileId" required placeholder="e.g. Meeting-notes" autocomplete="off">
+
+        <label for="storageType">Storage Type:</label>
+        <select name="storageType" id="storageType" required>
+          <option value="centralized">Centralized (MySQL)</option>
+          <option value="ipfs">Decentralized (IPFS)</option>
+        </select>
+
+        <label for="file">Select File:</label>
+        <input type="file" name="file" id="file" required>
+
+        <button type="submit">Store File</button>
+      </form>
+      <div id="storeResult" class="result-message" style="display:none;"></div>
+    </div>
+
+    <!-- Verify File Tab -->
+    <div id="verify" class="tab-content">
+      <form id="verifyForm" enctype="multipart/form-data" autocomplete="off">
+        <label for="verifyFileId">File ID (to verify):</label>
+        <input type="text" name="fileId" id="verifyFileId" required placeholder="e.g. Meeting-notes" autocomplete="off">
+
+        <label for="verifyFile">Select File (to verify):</label>
+        <input type="file" name="file" id="verifyFile" required>
+
+        <button type="submit">Verify File</button>
+      </form>
+      <div id="verifyResult" class="result-message" style="display:none;"></div>
+    </div>
+  </div>
+
+  <script>
+    // Tab logic
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.onclick = function() {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+        // Reset messages
+        document.getElementById('storeResult').style.display = 'none';
+        document.getElementById('verifyResult').style.display = 'none';
+      }
+    });
+
+    // Store File Form Handler
+    document.getElementById('storeForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const resultDiv = document.getElementById('storeResult');
+      resultDiv.style.display = 'none';
+      resultDiv.classList.remove('error');
+      resultDiv.textContent = "";
+
+      const formData = new FormData(this);
+      
+      try {
+        const resp = await fetch('/store', {
+          method: 'POST',
+          body: formData
+        });
+
+        let payload;
+        if (resp.ok){
+          payload = await resp.json();
+        } else {
+          const text = await resp.text();
+          throw new Error(text);
+        }
+        resultDiv.style.display = 'block';
+        if(resp.ok) {
+          let msg = `✅ ${payload.fileId} stored.\n`;
+          if (payload.pointer) msg += ` CID: ${payload.pointer}\n`;
+          msg += ` Tx: ${payload.txHash ?? "—"} \n gas: ${payload.gasUsed ?? "—"}\n`;
+          resultDiv.textContent = msg;
+        }
+      } catch (err) {
+        resultDiv.style.display = 'block';
+        resultDiv.classList.add('error');
+        resultDiv.textContent = "❌ Error sending file: " + err;
+      }
+    };
+
+    // Verify File Form Handler
+    document.getElementById('verifyForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const resultDiv = document.getElementById('verifyResult');
+      resultDiv.style.display = 'none';
+      resultDiv.classList.remove('error');
+      resultDiv.textContent = "";
+
+      const formData = new FormData(this);
+      try {
+        const resp = await fetch('/verify', {
+          method: 'POST',
+          body: formData
+        });
+        if(resp.ok) {
+          const payload = await resp.json();
+          resultDiv.style.display = 'block';
+          if (payload.match) {
+            resultDiv.textContent = "✅ Checksum match: file is authentic.";
+          } else {
+            resultDiv.classList.add('error');
+            resultDiv.textContent = "❌ Checksum mismatch: file may be tampered.";
+          }
+        } else {
+          const text = await resp.text();
+          resultDiv.style.display = 'block';
+          resultDiv.classList.add('error');
+          resultDiv.textContent = `❌ ${text}`;
+        }
+      } catch (err) {
+        resultDiv.style.display = 'block';
+        resultDiv.classList.add('error');
+        resultDiv.textContent = `❌ Error verifying file: ${err}`;
+      }
+    };
+  </script>
+</body>
+</html>
