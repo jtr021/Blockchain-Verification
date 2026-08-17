@@ -2,7 +2,6 @@
 
 A hybrid on‐chain/off‐chain integrity‐verification system (MySQL, IPFS, Ethereum Sepoli# Hybrid Data Integrity System)
 
-## .env includes a working private key with Sepolia testnet funds
 
 ## Prerequisites:
 
